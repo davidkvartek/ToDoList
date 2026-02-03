@@ -11,12 +11,32 @@
         <h1>To-Do List</h1>
         <form method="post" action="{{ url_for('index') }}">
             <input type="text" name="todo" placeholder="Add a to-do" required>
+            
+            <div class="meta-inputs">
+                <select name="priority">
+                    <option value="1">Low Priority</option>
+                    <option value="2" selected>Medium Priority</option>
+                    <option value="3">High Priority</option>
+                </select>
+                <input type="date" name="due_date" title="Due Date">
+            </div>
+
             <button type="submit">Add</button>
         </form>
         <ul>
             {% for todo in todos %}
-                <li class="{% if todo.complete %}completed{% endif %}">
-                    <span>{{ todo.title }}</span>
+                <li class="{% if todo.complete %}completed{% endif %} priority-{{ todo.priority }}">
+                    <div class="task-info">
+                        <span class="title">{{ todo.title }}</span>
+                        <div class="meta">
+                            {% if todo.due_date %}
+                                <span class="due-date">📅 {{ todo.due_date }}</span>
+                            {% endif %}
+                            <span class="badge priority-{{ todo.priority }}">
+                                {% if todo.priority == 3 %}High{% elif todo.priority == 2 %}Med{% else %}Low{% endif %}
+                            </span>
+                        </div>
+                    </div>
                     <div class="actions">
                         <a href="{{ url_for('update', todo_id=todo.id) }}">
                             {% if todo.complete %}Undo{% else %}Complete{% endif %}

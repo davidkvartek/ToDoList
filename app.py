@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
@@ -10,6 +11,8 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     complete = db.Column(db.Boolean, default=False)
+    due_date = db.Column(db.String(10), nullable=True) # YYYY-MM-DD
+    priority = db.Column(db.Integer, default=1) # 1=Low, 2=Medium, 3=High
 
 with app.app_context():
     db.create_all()
@@ -18,14 +21,28 @@ with app.app_context():
 def index():
     if request.method == "POST":
         title = request.form.get("todo")
+        due_date = request.form.get("due_date")
+        priority = request.form.get("priority")
+        
         if title:
-            new_todo = Todo(title=title)
+            # Convert priority to int, default to 1 (Low)
+            try:
+                priority = int(priority)
+            except (ValueError, TypeError):
+                priority = 1
+                
+            new_todo = Todo(title=title, due_date=due_date, priority=priority)
             db.session.add(new_todo)
             db.session.commit()
         return redirect(url_for('index'))
     
-    # Show incomplete items first, then completed items
-    todos = Todo.query.order_by(Todo.complete, Todo.id.desc()).all()
+    # Sort by: Incomplete first, then Priority (High to Low), then Due Date (Soonest first)
+    todos = Todo.query.order_by(
+        Todo.complete.asc(), 
+        Todo.priority.desc(), 
+        Todo.due_date.asc().nullslast()
+    ).all()
+    
     return render_template("index.html", todos=todos)
 
 @app.route("/update/<int:todo_id>")

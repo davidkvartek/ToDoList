@@ -12,11 +12,12 @@ def server():
     
     # Create test database
     with app.app_context():
+        # Ensure fresh start
+        db.drop_all()
         db.create_all()
 
     # Start the server in a separate thread
     port = 5001
-    # app is the WSGI application
     httpd = make_server('127.0.0.1', port, app)
     
     thread = threading.Thread(target=httpd.serve_forever)
