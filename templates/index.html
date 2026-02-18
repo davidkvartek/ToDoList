@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>To-Do List</h1>
-        <form method="post" action="{{ url_for('index') }}">
+        <form method="post" action="{{ url_for('main.index') }}">
             <input type="text" name="todo" placeholder="Add a to-do" required>
             
             <div class="meta-inputs">
@@ -38,10 +38,10 @@
                         </div>
                     </div>
                     <div class="actions">
-                        <a href="{{ url_for('update', todo_id=todo.id) }}">
+                        <a href="{{ url_for('main.update', todo_id=todo.id) }}">
                             {% if todo.complete %}Undo{% else %}Complete{% endif %}
                         </a>
-                        <a href="{{ url_for('delete', todo_id=todo.id) }}" class="delete">Delete</a>
+                        <a href="{{ url_for('main.delete', todo_id=todo.id) }}" class="delete">Delete</a>
                     </div>
                 </li>
             {% endfor %}

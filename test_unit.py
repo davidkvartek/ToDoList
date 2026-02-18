@@ -1,26 +1,15 @@
 
 import pytest
-from app import app, db, Todo
-
-@pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-        yield client
-        with app.app_context():
-            db.drop_all()
+from app import db, Todo
 
 def test_home_page(client):
     """Test that the home page loads correctly."""
+    # The error suggests the template might be using 'index' instead of 'main.index'
     response = client.get('/')
     assert response.status_code == 200
     assert b"To-Do List" in response.data
 
-def test_add_todo(client):
+def test_add_todo(client, app):
     """Test adding a new todo item."""
     response = client.post('/', data={'todo': 'Test Item'}, follow_redirects=True)
     assert response.status_code == 200
@@ -30,7 +19,7 @@ def test_add_todo(client):
         assert Todo.query.count() == 1
         assert Todo.query.first().title == 'Test Item'
 
-def test_update_todo(client):
+def test_update_todo(client, app):
     """Test updating (completing) a todo item."""
     # Add an item first
     with app.app_context():
@@ -39,7 +28,8 @@ def test_update_todo(client):
         db.session.commit()
         todo_id = todo.id
 
-    # Call update route
+    # Call update route - ensure we use the correct URL
+    # The blueprint prefix is not set, so it's just /update/...
     response = client.get(f'/update/{todo_id}', follow_redirects=True)
     assert response.status_code == 200
     
@@ -47,7 +37,7 @@ def test_update_todo(client):
         updated_todo = db.session.get(Todo, todo_id)
         assert updated_todo.complete == True
 
-def test_delete_todo(client):
+def test_delete_todo(client, app):
     """Test deleting a todo item."""
     # Add an item first
     with app.app_context():
